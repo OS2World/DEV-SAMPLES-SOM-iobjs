@@ -1,0 +1,70 @@
+#ifndef phonedir_idl
+#define phonedir_idl
+
+//  phonedir.idl
+//
+//  This in the CORBA interface definition of a very simple
+//  phone directory object.  It is a re-implementation of the
+//  simple phone dir spec'd by DDJ's Ray Valdes.
+//
+//  9/8/94 - Charles Erickson IBM
+//
+
+#include <somobj.idl>
+
+interface PhoneDir : SOMObject
+{
+#ifdef __PRIVATE__
+    // Phone directory implementation details
+    struct record {
+       string name;
+       string phone_number;
+    };
+    const long MAX_RECORDS = 5;
+#endif
+
+  // Operations on a PhoneDir:
+  string LookupByName(in string name);
+  // Look up the phone number of the given name.
+
+  string LookupByNumber(in string number);
+  // Look up the name given the phone number.
+
+  void Initialize(inout somInitCtrl ctrl);
+  // Object initializer.
+
+#ifdef __PRIVATE__
+  record CreateRecord(in string name, in string phone_number);
+  // Return a new phone directory record given the name
+  // and number.
+#endif
+
+#ifdef __SOMIDL__
+  implementation {
+    // Class modifiers:
+    // releaseorder is for upward compatible release management.
+    releaseorder: LookupByName,
+                  LookupByNumber,
+                  Initialize,
+#ifdef __PRIVATE__
+                  CreateRecord;
+#else
+                  Internal1;
+#endif
+    memory_management = corba;          // caller owns returned memory
+    function_prefix   = phonedir_;      // language bindings directive
+    dllname           = "phonedir.dll"; // class library
+
+#ifdef __PRIVATE__
+    // Phone directory implementation details
+    sequence<record, MAX_RECORDS> theDatabase;
+#endif
+
+    // Method modifiers:
+    Initialize:     init; // this method is an initializer
+    somDefaultInit: override, init; // default initializer
+  };
+#endif /* __SOMIDL__ */
+};
+#endif  /* phonedir_idl */
+

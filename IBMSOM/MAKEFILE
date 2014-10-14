@@ -1,0 +1,126 @@
+# Makefile for phonedir
+# Charles Erickson IBM
+#
+# This make file requires the following source code:
+#   phonedir.idl - Phone directory interface definition
+#   phonedir.cpp - Phone directory implmentation
+#   phonedir.def - Phone directory class library (DLL) definition
+#   main.cpp     - A phone directory client program.
+#
+# This make file produces:
+#   phonedir.lib - An import library for client program linking
+#   phonedir.dll - The loadable class library
+#   phonedir.xh  - The private C++ header for the PhoneDir class
+#   phonedir.xih - The C++ implementation header for the PhoneDir class
+#   phonedir.pxh - The public C++ header for the PhoneDir class
+#   phonedir.o   - The PhoneDir implementation object
+#   main.exe     - The client program executable
+#   main.o       - The client program object
+#   som.ir       - The SOM Interface Respository (assuming env var SOMIR
+#                  includes som.ir as last file in list)
+#
+# This make file includes two targets for modifying the SOM Implemenation
+# Repository: "reg" and "unreg"
+#   reg          - This target registers a new server that supports the
+#                  PhoneDir class.
+#   unreg        - This target unregisters the server registered by the
+#                  reg target.
+#
+# This phone directory example was successfully built and run using the
+# following versions of software:
+#
+#    IBM SOMobjects Toolkit Version 2.1 Beta
+#    IBM C/C++ Tools Version 2.01  (CT00010, CT00002)
+#    OS/2 linker LINK386 Version 2.01.012
+#    OS/2 2.11
+#    Remote object creation verified on IBM TCP/IP Version 2.0 (UN50382)
+#
+
+TARGET     = phonedir.dll
+TARGETS    = $(TARGET) phonedir.lib main.exe
+OBJS       = phonedir.o
+
+CC         = icc
+CDEBUG     = -Ti+
+LDEBUG     = /debug
+CFLAGS     = -W3 -c $(CDEBUG) -Q+ -Gd- -Gm+ -Gs+ -Sm
+LDFLAGS    = /exepack /packd /packc /align:4 /stack:100000 /pm:vio /noe /noi /nol $(LDEBUG)
+LIBLIST    = somtk.lib
+LINKER     = link386
+SC         = sc
+SCFLAGS    = -p -u -sxh;xih
+SCFLAGSPUB = -sxh
+DELETE     = del
+
+.SUFFIXES: .idl .xih .xh .cpp
+
+.cpp.o:
+        $(CC) -fo$*.o -I. -I$(SOMBASE)\include $(CFLAGS) -Ge- $<
+
+.idl.xih:
+        $(SC) $(SCFLAGS) $<
+
+.idl.xh:
+        $(SC) $(SCFLAGS) $<
+
+# Generate a public language binding.
+# Note: this will only produce a public version of the
+# C++ header for the class. In a more realistic example,
+# a public version of the IDL file would be produced.
+# From that public IDL file, public language bindings
+# would be produced.
+# Public IDL files do not include __PRIVATE__ sections.
+.idl.pxh:
+        $(SC) $(SCFLAGSPUB) $<
+        ren $*.xh $*.pxh
+
+.idl.cpp:
+        $(SC) $(SCFLAGS) $<
+
+all: $(TARGETS)
+
+phonedir.o: phonedir.xih phonedir.cpp
+
+phonedir.dll: $(OBJS) phonedir.def
+        $(LINKER) $(LDFLAGS) @<<
+$(OBJS: = +^
+)
+$@
+nul
+$(LIBLIST)
+phonedir.def
+<<
+
+phonedir.lib: phonedir.dll phonedir.def
+        implib phonedir.lib phonedir.def
+
+main.o: main.cpp phonedir.pxh
+        $(CC) -fo$*.o -I. -I$(SOMBASE)\include $(CFLAGS) -Ge+ $*.cpp
+
+main.exe: main.o
+        $(LINKER) $(LDFLAGS) main.o,$@,NUL,$(LIBLIST)+phonedir;
+        @echo Run $@ to execute the client program.
+
+unreg:
+        -regimpl -D -i PhoneDirServer
+        -$(DELETE) reg
+
+# To register this
+reg:
+        regimpl -A -i PhoneDirServer
+        regimpl -a -i PhoneDirServer -c PhoneDir
+        regimpl -L -i PhoneDirServer
+        @echo Remember to run somdd before running the client program.
+        echo $@ > $@
+
+clean: unreg
+        -$(DELETE) som.ir
+        -$(DELETE) $(TARGET)
+        -$(DELETE) phonedir.lib
+        -$(DELETE) main.exe
+        -$(DELETE) *.xih
+        -$(DELETE) *.o
+        -$(DELETE) phonedir.xh
+        -$(DELETE) phonedir.pxh
+
+

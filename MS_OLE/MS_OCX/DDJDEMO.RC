@@ -1,0 +1,127 @@
+//Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.rc""\r\n"
+    "#include ""ddjdemo.rc2""  // non-App Studio edited resources\r\n"
+    "#if 0\r\n"
+    "#include "".\\tlb16\\ddjdemo.tlb""  // 16-bit: force dependency on .TLB file\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+IDI_ABOUTDLL            ICON    DISCARDABLE     "aboutdll.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_DDJDEMO             BITMAP  DISCARDABLE     "ddjdemo1.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX_DDJDEMO DIALOG DISCARDABLE  34, 22, 260, 55
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Ddjdemo Control"
+FONT 8, "MS Sans Serif"
+BEGIN
+    ICON            IDI_ABOUTDLL,IDC_STATIC,10,10,18,20
+    LTEXT           "DDJ Demo OLE Custom Control, Version 1.0",IDC_STATIC,40,
+                    10,170,8
+    LTEXT           "Copyright \251 1994, Dr. Dobb's Journal & Microsoft Corp.",
+                    IDC_STATIC,40,38,180,8,SS_NOPREFIX
+    DEFPUSHBUTTON   "OK",IDOK,220,10,32,14,WS_GROUP
+    LTEXT           "Written by Ray Valdes and Steve Ross",IDC_STATIC,40,24,
+                    127,8
+END
+
+IDD_PROPPAGE_DDJDEMO DIALOG DISCARDABLE  0, 0, 250, 62
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Name:",IDC_STATIC,18,13,22,8
+    EDITTEXT        IDC_EDIT1,50,11,118,13,ES_AUTOHSCROLL | WS_DISABLED
+    LTEXT           "Phone:",IDC_STATIC,18,35,24,8
+    EDITTEXT        IDC_EDIT2,50,33,118,13,ES_AUTOHSCROLL | WS_DISABLED
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DDJDEMO             "Ddjdemo Control"
+    IDS_DDJDEMO_PPG         "Ddjdemo Property Page"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DDJDEMO_PPG_CAPTION "General"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_PROPERTIESVERB      "&Properties..."
+END
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#include "afxres.rc"
+#include "ddjdemo.rc2"  // non-App Studio edited resources
+#if 0
+#include ".\tlb16\ddjdemo.tlb"  // 16-bit: force dependency on .TLB file
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

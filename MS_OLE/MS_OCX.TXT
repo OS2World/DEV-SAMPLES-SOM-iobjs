@@ -1,0 +1,859 @@
+Creating The "Dr. Dobb's Journal"
+
+OLE Custom Control
+
+by Steve Ross
+
+
+
+Note from DDJ editors: The following narrative was contributed by
+Steve Ross of Microsoft as part of the submission for "Implementing
+Interoperable Objects", which appeared in the Dr Dobbs Special Report
+on Interoperable Objects, Winter 1994-1995. The article, which is
+originally in Microsoft Word 6.0 format, contains numerous screen
+shots which bring the total size up to 2.3 megabytes. We've taken the
+liberty of deleting the screen shots to make it more convenient for
+those downloading the listings from Compuserve and other bulletin
+boards. This narrative is appearing in two forms: MS_OCX.DOC (which
+contains the Word 6.0 document) and MS_OCX.TXT (which is the plain
+ASCII version of the document).
+
+Problem Description
+
+The following problem description is copied directly from email
+written by Ray Valdes.  Ideally, the sample component object and
+application will be implemented on three levels:
+
+A. first, a non-visual implementation that is close to the
+traditional client/server model, in which the client application
+makes a request (say, for the phone number) from the server component
+(which would fill a buffer or return a pointer to shared storage).
+The emphasis of our coverage is on the messaging/packaging/naming
+machinery necessary to get the client and server to collaborate
+across various boundaries. Relevant boundaries are address space,
+process lifetime boundaries, machine/network boundaries and
+implementation language boundaries.
+
+DDJ readers will be very curious and motivated to examine the source
+code to see if the implementation is understandable and workable.
+Because of this, it is best if the implementation is done by experts
+who are familiar with the technology, as opposed to having a novice
+attempt to climb the learning curve.
+
+B. second, a visual implementation that shows the compound document
+capability.  This option, of course, rules out technologies that are
+strictly low-level in scope, such as SOM/DSOM and ORB.  The component
+object gets embedded in a container document and allow the user to
+type in a query (such as a name) and displays the resulting phone
+number.  The goal is to demonstrate to the application developer the
+mechanics of the linking-and-embedding protocol. An additional goal
+might be to highlight the power of a development tool, class library
+or app framework, that would ease the burden of implementing this
+complex protocol between container and component.
+
+C. finally, an optional implementation might show how an application
+can access the component's service programmatically, via a scripting
+language or automation interface.
+
+SOLUTION USING OLE CUSTOM CONTROLS
+
+The following description shows how to implement item (B) from the
+above list as an OLE Custom Control.
+
+Implementation Strategy
+
+For the purposes of this demonstration, we will create an OLE Custom
+Control that is a subclassed Windows listbox. We will use this
+subclassed listbox to demonstrate that we can:
+
+  * Access the "one-minute phone directory database" by Ray Valdes (the
+code is contained in Appendix A of this document)
+
+  * Display the data
+
+  * Fire off an event, NameNumberChanged, when the user changes the
+selection (demonstrating the events part of OLE Custom Controls, and
+an important difference between these controls and the standard
+listbox control)
+
+  * Provide some methods for accessing the database: GetNameFromNumber,
+and GetNumberFromName. These methods call the phonedir_LookupByNumber
+and phonedir_LookupByName functions written by Ray Valdes. The
+importance of this is that it demonstrates how easily one can
+encapsulate functionality in an OLE Custom Control.
+
+  * Provide some read-only properties for inspecting the state of the
+object: CurrentNumber and CurrentName. These are read-only because
+the database is read-only. They could just as easily have been
+read/write, but this provides us with an interesting opportunity to
+show the flexibility of OLE Custom Controls.
+
+AUTOMATED STEPS
+Part 1: Using the Control Wizard
+
+To start an OLE Custom Control, the first step is to describe it to
+the Control Wizard. The Wizard then generates much of the code
+necessary to implement the control. For the purposes of this
+document, Visual C++ version 2.0 will be discussed, although exactly
+the same steps work for Visual C++ 1.5 (with the OLE Custom Control
+Development Kit installed).
+
+Control Wizard General Steps
+
+To start the Control Wizard, choose Control Wizard from the Tools
+menu. Visual C++ brings up the following dialog box:
+
+		FIGURE 1: "The Control Wizard"
+		<<Figure removed to save space. --- DDJ >>
+
+This dialog box looks very similar to the App Wizard dialog, which
+many Visual C++ users have learned.( For the fields on this page,
+take the following actions:For the project name, type ddjdemoNavigate
+the directory listing until you have found a location suitable (not
+the root) for your control development work.
+
+The Control Wizard proposes a subdirectory called "ddjdemo" and a
+project name called "ddjdemo." This is correct. Do not press OK yet.
+
+Next, choose the Control Options button.
+
+Control Wizard: Control Options
+
+		FIGURE 2: "The Control Options Dialog"
+		<<Figure removed to save space. --- DDJ >>
+
+The Control Options dialog presents you with a few choices. The only
+items we need to modify are the following:Check the "Subclass Windows
+control" option
+
+Pick "LISTBOX" from the Windows control class dropdown list
+
+Choose OK
+
+THE CONTROL WIZARD
+Wrapup
+
+You can now choose OK to have the Control Wizard generate your
+control. As you may have noticed from looking around, there are other
+options available using the Control Wizard, each specific to a
+different kind of control. Discussion of these other options is
+beyond the scope of this document.
+
+AUTOMATED STEPS
+Part 2: Defining the OLE Interface Using the Class Wizard
+
+Before adding any implementation at all, you need to define the
+interface to your OLE Custom Control. This is most easily done using
+the Class Wizard. To start, choose ClassWizard from the Project menu.
+
+
+		FIGURE 3: "ClassWizard OLE Automation Page"
+		<<Figure removed to save space. --- DDJ >>
+
+Adding the MethodsPick the OLE Automation page, as shown in Figure 3,
+above. You are going to be adding two methods: GetNameFromNumber and
+GetNumberFromName. Here are the steps to do that:( To add
+GetNameFromNumber
+
+Pick Add Method
+
+For the "External Name," type GetNameFromNumber (the ClassWizard
+proposes the same Internal Name, which is fine) For the return type,
+pick BSTR from the dropdown combo box. A BSTR is a length-prefixed
+string, and is a standard way to return a string type
+
+Here is where Visual C++ 1.5 and 2.0 diverge very slightly. In 2.0,
+there is in-place editing of the parameters to methods, whereas in
+1.5 you have to add the parameters explicitly. Whichever you are
+using, add a parameter called szName and for the type, specify
+LPCTSTR (this is a constant Unicode-friendly string).
+
+
+
+		FIGURE 4: "Adding GetNameFromNumber Method"
+		<<Figure removed to save space. --- DDJ >>
+
+Choose OK and the method is added.( To add GetNumberFromName, repeat
+the same steps as above. The completed dialog box is as shown in
+Figure 5, below:
+
+
+		FIGURE 5: "Adding GetNumberFromName Method"
+		<<Figure removed to save space. --- DDJ >>
+
+That's all there is to adding methods. Once you've finished, the
+ClassWizard will look as follows:
+
+
+		FIGURE 6: "ClassWizard with Two Methods Declared"
+		<<Figure removed to save space. --- DDJ >>
+
+The "M" to the left of the method name indicates that these are
+methods unique to this control.Adding the PropertiesThe properties
+are added using ClassWizard as well. If you dismissed ClassWizard,
+start it again and choose the OLE Automation tab. You'll be adding
+the CurrentName and CurrentNumber properties.
+
+* To add CurrentName Choose Add Property
+* For the "External Name," type CurrentName
+* Pick the Get/Set Methods option
+* For the type, choose BSTR from the dropdown combo box
+* Clear the Set Function edit box to make the property read-only
+
+A completely filled-in dialog box appears in Figure 7, below.
+
+
+		FIGURE 7: "Adding the CurrentName Property" 
+		<<Figure removed to save space. --- DDJ >>
+
+To add CurrentNumberRepeat the steps above, substituting
+CurrentNumber for CurrentName
+
+A completely filled-in dialog box is shown in Figure 8, below:
+
+		FIGURE 8: "Adding the CurrentNumber Property"
+		<<Figure removed to save space. --- DDJ >>
+
+Once these properties have been added, the ClassWizard shows the
+following screen:
+
+		FIGURE 9: "Class Wizard with Methods and Properties"
+		<<Figure removed to save space. --- DDJ >>
+
+The "C" next to CurrentName and CurrentNumber reflect the fact that
+these are custom properties.  The OLE Custom Control Development Kit
+provides implementation for what are called "stock" properties as
+well. We won't touch on these here, but they are shown with an "S"
+next to them, and you can override the behavior of stock properties
+if you like.
+
+Adding the NameNumberChanged Event
+
+The last remaining part of the interface to this control is to add an
+event that is triggered when the user changes selection in the
+listbox. This event will not only notify the container that the
+selection has changed but it will also save the container some time
+and pass the new name and number as event parameters. As with the
+other interface elements, this is done using the ClassWizard, but
+this time, you'll use the OLE Events tab, shown in Figure 10,
+below:
+		Figure 10: "OLE Events Tab"		
+		<<Figure removed to save space. --- DDJ >>
+
+To add the NameNumberChoose Add EventFor "External Name," type
+NameNumberChanged (ClassWizard proposes an internal name of
+FireNameNumberChanged. This is the function you call in your
+control's code to actually fire the event. Accept the proposed name)
+
+As with methods, there is a slight divergence between the behavior of
+Visual C++ 1.5 and Visual C++ 2.0 here, as the new ClassWizard
+accepts in-place editing of parameters. Supply two parameters:
+szName, of type LPCTSTR, and szNumber of type LPCTSTR
+
+A completely filled-in dialog box is shown in Figure 11,
+below:
+
+		Figure 11: "Adding the NameNumberChanged Event"
+		<<Figure removed to save space. --- DDJ >>
+
+
+You can now choose OK to finish your work with the ClassWizard. You
+have declared a complete OLE interface to this control, but have
+provided no implementation.The ImplementationBefore getting to the
+implementation, it is important to do just a bit more with the
+ClassWizard. Start the ClassWizard and select the Message Maps tab as
+shown in Figure 12, below:
+
+	Figure 12: "Adding a Message Map Entry"
+	<<Figure removed to save space. --- DDJ >>
+
+When a new instance of the control is inserted in a container, we
+populate the listbox with the entries in the database. A good place
+to do this initialization is in the OnCreate member function, which
+responds to the WM_CREATE Windows message.( To map WM_CREATE to your
+OnCreate functionPick CDdjdemoCtrl in the left pane (Object IDs)Pick
+WM_CREATE in the right pane (Messages)Choose the Add Function
+buttonThe dialog will appear is the one in Figure 12. Choose OK to
+dismiss the ClassWizard.The implementation for the methods, events,
+and properties in this control reside entirely in the file
+DDJDECTL.CPP. The listing below shows this file, and which lines have
+been added for implementation. Lines that were added without using
+the Wizard tools are denoted using the "==>" symbol at the left
+margin of the following listing:
+
+
+------------------------------------------------START LISTING----
+
+        // DDJDECTL.CPP  
+        // Implementation of the CDdjdemoCtrl OLE control class.  
+        #include "stdafx.h" 
+        #include "ddjdemo.h"
+        #include "ddjdectl.h"
+        #include "ddjdeppg.h"
+        
+        // Include API to "one-minute phone directory by Ray Valdes
+==>      #include "phonedir.h"
+        
+        
+        #ifdef _DEBUG
+        #undef THIS_FILE
+        static char BASED_CODE THIS_FILE[] = __FILE__;
+        #endif
+        
+        
+        IMPLEMENT_DYNCREATE(CDdjdemoCtrl, COleControl)
+        
+        
+        ///////////////////////////////////
+        // Message map
+        
+        BEGIN_MESSAGE_MAP(CDdjdemoCtrl, COleControl)
+                //{{AFX_MSG_MAP(CDdjdemoCtrl)
+                ON_OLEVERB(IDS_PROPERTIESVERB, OnProperties)
+                ON_MESSAGE(OCM_COMMAND, OnOcmCommand)
+                ON_WM_CREATE()
+                //}}AFX_MSG_MAP
+        END_MESSAGE_MAP()
+        
+        
+        ///////////////////////////////////
+        // Dispatch map
+        
+        BEGIN_DISPATCH_MAP(CDdjdemoCtrl, COleControl)
+                //{{AFX_DISPATCH_MAP(CDdjdemoCtrl)
+                DISP_PROPERTY_EX(CDdjdemoCtrl, "CurrentName", GetCurrentName, SetNotSupported, VT_BSTR)
+                DISP_PROPERTY_EX(CDdjdemoCtrl, "CurrentNumber", GetCurrentNumber, SetNotSupported, VT_BSTR)
+                DISP_FUNCTION(CDdjdemoCtrl, "GetNameFromNumber", GetNameFromNumber, VT_BSTR, VTS_BSTR)
+                DISP_FUNCTION(CDdjdemoCtrl, "GetNumberFromName", GetNumberFromName, VT_BSTR, VTS_BSTR)
+                //}}AFX_DISPATCH_MAP
+                DISP_FUNCTION_ID(CDdjdemoCtrl, "AboutBox", DISPID_ABOUTBOX, AboutBox, VT_EMPTY, VTS_NONE)
+        END_DISPATCH_MAP()
+        
+        
+        ///////////////////////////////////
+        // Event map
+        
+        BEGIN_EVENT_MAP(CDdjdemoCtrl, COleControl)
+                //{{AFX_EVENT_MAP(CDdjdemoCtrl)
+                EVENT_CUSTOM("NameNumberChanged", FireNameNumberChanged, VTS_BSTR  VTS_BSTR)
+                //}}AFX_EVENT_MAP
+        END_EVENT_MAP()
+        
+        
+        ///////////////////////////////////
+        // Property pages
+        // TODO: Add more property pages as needed.  Remember to increase the count!
+        BEGIN_PROPPAGEIDS(CDdjdemoCtrl, 1)
+                PROPPAGEID(CDdjdemoPropPage::guid)
+        END_PROPPAGEIDS(CDdjdemoCtrl)
+        
+        
+        ///////////////////////////////////
+        // Initialize class factory and guid
+        
+        IMPLEMENT_OLECREATE_EX(CDdjdemoCtrl, "DDJDEMO.DdjdemoCtrl.1",
+                0xaf3b7529, 0x89d0, 0x101b, 0xa6, 0xe4, 0x0, 0xdd, 0x1, 0x11, 0xa6, 0x58)
+        
+        
+        ///////////////////////////////////
+        // Type library ID and version
+        
+        IMPLEMENT_OLETYPELIB(CDdjdemoCtrl, _tlid, _wVerMajor, _wVerMinor)
+        
+        
+        ///////////////////////////////////
+        // Interface IDs
+        
+        const IID BASED_CODE IID_DDdjdemo =
+                        { 0xaf3b752a, 0x89d0, 0x101b, { 0xa6, 0xe4, 0x0, 0xdd, 0x1, 0x11, 0xa6, 0x58 } };
+        const IID BASED_CODE IID_DDdjdemoEvents =
+                        { 0xaf3b752b, 0x89d0, 0x101b, { 0xa6, 0xe4, 0x0, 0xdd, 0x1, 0x11, 0xa6, 0x58 } };
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::CDdjdemoCtrlFactory::UpdateRegistry -
+        // Adds or removes system registry entries for CDdjdemoCtrl
+        
+        BOOL CDdjdemoCtrl::CDdjdemoCtrlFactory::UpdateRegistry(BOOL bRegister)
+        {
+                if (bRegister)
+                        return AfxOleRegisterControlClass(
+                                AfxGetInstanceHandle(),
+                                m_clsid,
+                                m_lpszProgID,
+                                IDS_DDJDEMO,
+                                IDB_DDJDEMO,
+                                TRUE,                                                //  Insertable
+                                OLEMISC_ACTIVATEWHENVISIBLE |
+                                OLEMISC_SETCLIENTSITEFIRST |
+                                OLEMISC_INSIDEOUT |
+                                OLEMISC_CANTLINKINSIDE |
+                                OLEMISC_RECOMPOSEONRESIZE,
+                                _tlid,
+                                _wVerMajor,
+                                _wVerMinor);
+                else
+                        return AfxOleUnregisterClass(m_clsid, m_lpszProgID);
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::CDdjdemoCtrl - Constructor
+        
+        CDdjdemoCtrl::CDdjdemoCtrl()
+        {
+                // Set sensible initial size for the control
+==>              SetInitialSize(250, 100);
+                InitializeIIDs(&IID_DDdjdemo, &IID_DDdjdemoEvents);
+        
+                // Call Ray's Initialize function
+==>              phonedir_Initialize();
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::~CDdjdemoCtrl - Destructor
+        
+        CDdjdemoCtrl::~CDdjdemoCtrl()
+        {
+                // Call Ray's Terminate function
+==>              phonedir_Terminate();
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::OnDraw - Drawing function
+        
+        void CDdjdemoCtrl::OnDraw(
+                                CDC* pdc, const CRect& rcBounds, const CRect& rcInvalid)
+        {
+                DoSuperclassPaint(pdc, rcBounds);
+        }
+        
+==>      #ifndef _WIN32
+        // For Windows 3.1, some subclassed controls can't be safely drawn to a metafile.
+        // As we don't draw to a metafile anyhow, supply an empty override for the
+        // function.If we had a drawing representation, we'd iterate the list box, doing
+        // DrawText, TextOut calls for each list item.
+
+==>      void CDdjdemoCtrl::OnDrawMetafile(CDC* pdc, const CRect& rcBounds)
+==>      {
+==>      }
+==>      #endif
+        
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::DoPropExchange - Persistence support
+        
+        void CDdjdemoCtrl::DoPropExchange(CPropExchange* pPX)
+        {
+                ExchangeVersion(pPX, MAKELONG(_wVerMinor, _wVerMajor));
+                COleControl::DoPropExchange(pPX);
+        
+                // TODO: Call PX_ functions for each persistent custom property.
+        
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::OnResetState - Reset control to default state
+        
+        void CDdjdemoCtrl::OnResetState()
+        {
+                COleControl::OnResetState();  // Resets defaults found in DoPropExchange
+        
+                // TODO: Reset any other control state here.
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::AboutBox - Display an "About" box to the user
+        
+        void CDdjdemoCtrl::AboutBox()
+        {
+                CDialog dlgAbout(IDD_ABOUTBOX_DDJDEMO);
+                dlgAbout.DoModal();
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::PreCreateWindow - Modify parameters for CreateWindowEx
+        
+        BOOL CDdjdemoCtrl::PreCreateWindow(CREATESTRUCT& cs)
+        {
+                // Modify the style bits for the listbox so we 1) can make a tab-separated
+                // 2-column list; 2) get notification of listbox events; and 3) can do
+                // vertical scrolling.
+==>              cs.style |= LBS_USETABSTOPS | LBS_NOTIFY | WS_VSCROLL;
+        
+                cs.lpszClass = _T("LISTBOX");
+                return COleControl::PreCreateWindow(cs);
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::GetSuperWndProcAddr - Provide storage for window proc
+        
+        WNDPROC* CDdjdemoCtrl::GetSuperWndProcAddr(void)
+        {
+                static WNDPROC NEAR pfnSuper;
+                return &pfnSuper;
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl::OnOcmCommand - Handle command messages
+        
+        LRESULT CDdjdemoCtrl::OnOcmCommand(WPARAM wParam, LPARAM lParam)
+        {
+        #ifdef _WIN32
+                WORD wNotifyCode = HIWORD(wParam);
+        #else
+                WORD wNotifyCode = HIWORD(lParam);
+        #endif
+                
+                // This is where the listbox notifications are received. The only
+                // one we're interested in is LBN_SELCHANGE. When the selection is
+                // changed, we reuse the code for GetCurrentName and GetCurrentNumber
+                // to retrieve the correct strings for name and phone number, then
+                // call the FireNameNumberChanged event that ClassWizard created.
+==>              switch(wNotifyCode)
+==>              {
+==>              case LBN_SELCHANGE:
+==>                      FireNameNumberChanged(GetCurrentName(), GetCurrentNumber());
+==>                      break;
+==>              }
+        
+                return 0;
+        }
+        
+        
+        ///////////////////////////////////
+        // CDdjdemoCtrl message handlers
+        
+        BSTR CDdjdemoCtrl::GetNameFromNumber(LPCTSTR szNumber) 
+        {
+                // Use one-minute phone directory API to retrieve a name
+                // given a number
+==>              CString s = phonedir_LookupByNumber((char *)szNumber);
+        
+                return s.AllocSysString();
+        }
+        
+        BSTR CDdjdemoCtrl::GetNumberFromName(LPCTSTR szName) 
+        {
+                // Use one-minute phone directory API to retrieve a number
+                // given a name
+==>              CString s = phonedir_LookupByName((char *)szName);
+        
+                return s.AllocSysString();
+        }
+        
+        BSTR CDdjdemoCtrl::GetCurrentName() 
+        {
+==>              UINT nIndex;
+                CString s;
+        
+                // If there is a selection, then get the corresponding name,
+                // otherwise return an empty string.
+==>              if((nIndex=(UINT)SendMessage(LB_GETCURSEL)) != LB_ERR)
+==>                      s = phonedir_LookupByOrdinal(nIndex).SpanExcluding("\t");
+==>              else
+==>                      s = "";
+        
+                return s.AllocSysString();
+        }
+        
+        BSTR CDdjdemoCtrl::GetCurrentNumber() 
+        {
+==>              UINT nIndex;
+                CString s;
+        
+                // If there is a selection, then get the corresponding number,
+                // otherwise return an empty string.
+==>              if((nIndex=(UINT)SendMessage(LB_GETCURSEL)) != LB_ERR)
+==>              {
+==>                      s = phonedir_LookupByOrdinal(nIndex);
+==>                      s = s.Mid(s.Find("\t") + 1);
+==>              }
+==>              else
+==>                      s = "";
+        
+                return s.AllocSysString();
+        }
+        
+        int CDdjdemoCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct) 
+        {
+                if (COleControl::OnCreate(lpCreateStruct) == -1)
+                        return -1;
+                
+                // Access the database using an ordinal lookup to get
+                // tab-separated strings. Add the strings to the listbox
+                // for initial population of the list.
+==>              CString strTemp;
+==>              for(int i = 0; (strTemp = phonedir_LookupByOrdinal(i)).GetLength() != 0; i++)
+==>                      SendMessage(LB_ADDSTRING, 0, (long)(LPCTSTR)strTemp); 
+                        
+                return 0;
+        }
+
+------------------------------------------------END LISTING----
+
+
+Note that there are only 34 lines of user-supplied code to provide
+the encapsulation of the "one-minute phone database" in an OLE Custom
+Control object (35, including the declaration of OnDrawMetafile in
+DDJDECTL.H).
+
+Other OLE Custom Control Features
+
+Several OLE Custom Control features have not yet been discussed.
+These are shown in the sample files provided. They are:
+
+   * Ability to provide a bitmap that container applications can use
+on their "Tools Palettes" to represent the control. This is done
+using the Visual C++ bitmap editor. Our bitmap looks like a telephone
+(except that it was designed by developers, not graphic artists).
+
+   * Ability to provide a property page that exposes the control's
+design-time properties to the user for convenient inspection and
+modification. In the case of our control, we've exposed only
+read-only properties, but to demonstrate the feature, a property page
+that interrogates the CurrentName and CurrentNumber properties is
+provided. The advantage of using property pages is that the control
+has the ability to validate data before it has to react to it. That
+can increase the robustness of these controls. Out-of-range data can
+be rejected immediately and the user can be given immediate feedback
+about what was wrong with it.
+
+   * Ability to provide a customized About Box. Display of the About
+Box is exposed much as a method would be. This provides the
+implementor the opportunity to display copyright information, an
+icon, and so on.
+
+TESTING THE CONTROL
+
+[Some text about "This section assumes you have installed either
+Visual C++ 1.5 or 2.0, and the OLE Custom Control Development Kit."]
+
+To test this control, build DDJDEMO.MAK or DDJDEM32.MAK (Visual C++
+1.5 and 2.0, respectively). Do not read DDJDEMO.MAK into Visual C++
+2.0, as it will convert it to a 32-bit project file, rendering it
+useless for further 16-bit development.
+
+Step 1: Test Container Exercise
+
+From the Tools menu, choose Test Container. A lightweight container
+applet appears, into which you can insert your control.
+
+		Figure 13: "The DDJ OLE Custom Control In the Test Container"
+		<<Figure removed to save space. --- DDJ >>
+
+Figure 13 shows how the control looks inserted in the Test Container.
+Here are other things you can do using the Test Container: Insert a
+new control into the container
+
+	Directly examine the properties of the control by querying
+it. Make a selection in the list box, then press this toolbar button.
+Find the CurrentName property. It should be the same as that
+selected. Find the CurrentNumber property. It should correspond as
+well.  Show an event log. Pick this tool, then change selections
+within the list. You'll see the custom event, NameNumberChanged fire,
+and the new values will be reported to the container.  Invoke
+methods. Pick this tool, then try GetNameFromPhone or
+GetPhoneFromName (jot down a few of the names and phone numbers
+first). Try picking a name or number that doesn't exist.
+
+	Insert a new control of this type. If you try this and
+nothing seems to happen, just drag the frame to the left a bit and
+you'll see that the reason is because the new control was inserted
+right over an existing one.The above is a quick tour of how one might
+test the functionality of an OLE Custom Control.Step 2: Try the
+Control in a Real ContainerFor this step, you must have installed
+Microsoft Access, version 2.0. A sample database called DDJTEST.MDB
+is provided that embeds this control.
+
+* To see the control in an Access form:
+
+Select the Form tab in the Database window
+
+The DDJ Demo form is listed in the Forms pane
+
+Select the DDJ Demo form in the Forms pane, and choose Open. The form
+shown in Figure 14 appears.
+
+	Figure 14: "The DDJ Demo Control in Access"
+	<<Figure removed to save space. --- DDJ >>
+
+This form has 4 active panes.
+
+The control itself, in the top left corner. Changing selections in
+the control fires the NameNumberChanged event
+
+The Properties pane, in the top right corner. This pane is only
+refreshed when you press the Update button. Choosing Update runs
+Access Basic code to get the CurrentName and CurrentNumber properties
+from the control.
+
+The Methods pane, in the bottom left corner. Enter a name in one of
+the edit boxes (making sure the other one is empty) and choose
+Lookup. This runs Access Basic code to invoke either the
+GetNameFromNumber or GetNumberFromName methods, depending on which
+edit box has text in it. The returned value is displayed.
+
+The Events pane, in the bottom right corner. This pane is dynamically
+updated as the NameNumberChanged event is received from the control.
+If you click different selections in the control, the edit boxes in
+this pane change value.
+
+----------------------------------------------------------------
+APPENDIX A: "One Minute Phone Directory Database"
+
+The following two listings are the modified one-minute phone
+directory database. The primary modifications were to recompile as
+C++, remove 16-bit dependencies (_f functions), change to the Windows
+typedefs (LPSTR, BOOL, etc.), and add an iterator function for the
+initial population of the user interface. The .cpp file is simply
+included as another file in the project.
+
+PHONEDIR.H
+/****************************************************************
+ > PHONEDIR.H -- This is the header file for PHONEDIR,
+ >               the one-minute phone directory database.
+ >               6/30/94. Ray Valdes.
+ >***************************************************************/
+
+// Modified 7/22/94, Steve Ross (Microsoft Corp.)
+
+/*****************This is the PhoneDir API***********************/
+
+BOOL  phonedir_Initialize	   (void);
+LPSTR phonedir_LookupByName      (LPSTR name);
+LPSTR phonedir_LookupByNumber    (LPSTR number);
+void  phonedir_Terminate         (void);
+
+// Added 7/22/94, Steve Ross (Microsoft Corp.)
+CString phonedir_LookupByOrdinal(UINT nIndex);
+
+/*******************End of PHONEDIR.H****************************/
+
+PHONEDIR.CPP
+/****************************************************************
+ >
+ > PHONEDIR.CPP --  the one-minute phone directory database.
+ >                                                   6/30/94. Ray Valdes.
+ >
+ > This is the simplest possible implementation of a phone directory
+ > database, not even a "toy" implementation. Everything is static
+ > and in memory. The goal is to provide the simplest possible implementation
+ > that satisfies the interface, which is as follows.
+ >
+ > The interface consists of four functions:
+ > 1. Initialize     -- called at program startup
+ > 2. LookupByName   -- given a name, returns corresponding phone number
+ > 3. LookupByNumber -- given a number, returns corresponding name
+ > 4. Terminate      -- called at program termination
+ >
+ > This interface can be satisfied by a procedural implementation
+ > as shown below, which can be packaged into a .OBJ module, or a DLL
+ > or other procedurally oriented components such as VBXs and OCXs.
+ > Alternatively, one could use this as a basis for an object-oriented
+ > implementation. The interface would remain basically the same,
+ > except for adding constructor and destructor (if you're using C++)
+ > and turning the API entrypoints into member functions.
+ >***************************************************************/
+
+// Modified 7/22/94, Steve Ross (Microsoft Corp.)
+
+/*
+ * There are a few minor dependencies on Microsoft C compiler,
+ * such as _fstrcmp() lib function and the _far pascal keywords
+ */
+
+#include "stdafx.h"
+#include <string.h>
+#include "phonedir.h"
+
+/****************************************************************
+ > This sets up the database structure, a fixed size array of
+ > fixed size records in memory, initialized at startup-time
+ > by hard-coded program statements (can this get any simpler?)
+ >***************************************************************/
+
+typedef struct
+{
+    LPSTR name;
+    LPSTR phone_number;
+} record;
+
+#define MAX_RECORDS 5
+
+static record theDatabase[MAX_RECORDS];
+
+/****************************************************************/
+void phonedir_CreateRecord(int arrayindex,LPSTR name,LPSTR phone);
+
+/****************************************************************/
+BOOL phonedir_Initialize(void)
+{
+    phonedir_CreateRecord(0,"Daffy Duck",         "310-555-1212");
+    phonedir_CreateRecord(1,"Wile E. Coyote",     "408-555-1212");
+    phonedir_CreateRecord(2,"Scrooge McDuck",     "206-555-1212");
+    phonedir_CreateRecord(3,"Huey Lewis",         "415-555-1212");
+    phonedir_CreateRecord(4,"Thomas Dewey",       "617-555-1212");
+    return TRUE; /* success */
+}
+/****************************************************************/
+void phonedir_CreateRecord(int i,LPSTR name,LPSTR phone_number)
+{
+    theDatabase[i].name         = name;
+    theDatabase[i].phone_number = phone_number;
+}
+/****************************************************************/
+LPSTR phonedir_LookupByName(LPSTR name)
+{
+    int i;
+    for(i=0; i < MAX_RECORDS; i++)
+    {
+	if(strcmp(theDatabase[i].name,name)==0)
+	    return theDatabase[i].phone_number;
+    }
+    return NULL;
+}
+/****************************************************************/
+LPSTR phonedir_LookupByNumber(LPSTR number)
+{
+    int i;
+    for(i=0; i < MAX_RECORDS; i++)
+    {
+	if(strcmp(theDatabase[i].phone_number,number)==0)
+	    return theDatabase[i].name;
+    }
+    return NULL;
+}
+/****************************************************************/
+// Added by Steve Ross (Microsoft Corp)
+// Allow iteration of the list for initial population of UI
+CString phonedir_LookupByOrdinal(UINT nIndex)
+{
+	if(nIndex < MAX_RECORDS)
+	{
+		CString strTemp = theDatabase[nIndex].name;
+		strTemp += "\t";
+		strTemp += theDatabase[nIndex].phone_number;
+
+		return strTemp;
+	}
+	else
+		return "";
+}
+
+void phonedir_Terminate(void)
+{
+    return;
+}
+/*********************End of PHONEDIR.C**************************/
+
+
+

@@ -1,0 +1,70 @@
+// ddjdemo.odl : type library source for OLE Custom Control project.
+
+// This file will be processed by the Make Type Library (mktyplib) tool to
+// produce the type library (ddjdemo.tlb) that will become a resource in
+// ddjdemo.ocx.
+
+#include <olectl.h>
+
+[ uuid(AF3B752C-89D0-101B-A6E4-00DD0111A658), version(1.0),
+  helpstring("Ddjdemo OLE Custom Control module") ]
+library DdjdemoLib
+{
+	importlib(STDOLE_TLB);
+	importlib(STDTYPE_TLB);
+	
+	//  Primary dispatch interface for CDdjdemoCtrl
+	
+	[ uuid(AF3B752A-89D0-101B-A6E4-00DD0111A658),
+	  helpstring("Dispatch interface for Ddjdemo Control") ]
+	dispinterface _DDdjdemo
+	{
+		properties:
+			// NOTE - ClassWizard will maintain property information here.
+			//    Use extreme caution when editing this section.
+			//{{AFX_ODL_PROP(CDdjdemoCtrl)
+			[id(1)] BSTR CurrentName;
+			[id(2)] BSTR CurrentNumber;
+			//}}AFX_ODL_PROP
+			
+		methods:
+			// NOTE - ClassWizard will maintain method information here.
+			//    Use extreme caution when editing this section.
+			//{{AFX_ODL_METHOD(CDdjdemoCtrl)
+			[id(3)] BSTR GetNameFromNumber(BSTR szNumber);
+			[id(4)] BSTR GetNumberFromName(BSTR szName);
+			//}}AFX_ODL_METHOD
+
+			[id(DISPID_ABOUTBOX)] void AboutBox();
+	};
+
+	//  Event dispatch interface for CDdjdemoCtrl
+	
+	[ uuid(AF3B752B-89D0-101B-A6E4-00DD0111A658),
+	  helpstring("Event interface for Ddjdemo Control") ]
+	dispinterface _DDdjdemoEvents
+	{
+		properties:
+			//  Event interface has no properties
+			
+		methods:
+			// NOTE - ClassWizard will maintain event information here.
+			//    Use extreme caution when editing this section.
+			//{{AFX_ODL_EVENT(CDdjdemoCtrl)
+			[id(1)] void NameNumberChanged(BSTR szName, BSTR szNumber);
+			//}}AFX_ODL_EVENT
+	};
+
+	//  Class information for CDdjdemoCtrl
+	
+	[ uuid(AF3B7529-89D0-101B-A6E4-00DD0111A658),
+	  helpstring("Ddjdemo Control") ]
+	coclass Ddjdemo
+	{
+		[default] dispinterface _DDdjdemo;
+		[default, source] dispinterface _DDdjdemoEvents;
+	};
+
+
+	//{{AFX_APPEND_ODL}}
+};

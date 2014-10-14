@@ -1,0 +1,71 @@
+# makefile - Handy makefile for command-line use
+#
+# Usage:
+#	nmake [options] [all|clean]
+#
+# Options:
+#	WIN32=0		Build 16-bit version (default)
+#	WIN32=1		Build 32-bit version
+#	DEBUG=0		Build retail version
+#	DEBUG=1		Build debug version (default)
+#	UNICODE=0	Build ANSI/DBCS version
+#	UNICODE=1	Build Unicode version (default)
+
+!ifndef WIN32
+WIN32=0
+!endif
+
+!ifndef UNICODE
+UNICODE=$(WIN32)
+!endif
+
+!ifndef DEBUG
+DEBUG=1
+!endif
+
+!if "$(WIN32)" == "1" 
+!if "$(UNICODE)" == "1"
+!if "$(DEBUG)" == "1"
+all:
+	nmake -f ddjdem32.mak CFG="Win32 Unicode Debug"
+clean:
+	if exist objdu32\*.* rm -f objdu32\*.*
+!else
+all:
+	nmake -f ddjdem32.mak CFG="Win32 Unicode Release"
+clean:
+	if exist obju32\*.* rm -f obju32\*.* 
+!endif
+!else
+!if "$(DEBUG)" == "1"
+all:
+	nmake -f ddjdem32.mak CFG="Win32 ANSI Debug"
+clean:
+	if exist objd32\*.* rm -f objd32\*.*
+!else
+all:
+	nmake -f ddjdem32.mak CFG="Win32 ANSI Release"
+clean:
+	if exist obj32\*.* rm -f obj32\*.*
+!endif
+!endif
+!else
+!if "$(DEBUG)" == "1"
+all:
+	nmake -f ddjdemo.mak DEBUG=1
+	if not exist objd16\*.* mkdir objd16
+	-mv *.sbr *.pdb *.obj *.res *.exe *.dll objd16
+clean:
+	-rm *.sbr *.pdb *.obj *.res *.exe *.dll
+	if exist objd16\*.* rm -f objd16\*.*
+!else
+all:
+	nmake -f ddjdemo.mak DEBUG=0
+	if not exist obj16\*.* mkdir obj16
+	-mv *.sbr *.pdb *.obj *.res *.exe *.dll obj16
+clean:
+	-rm *.sbr *.pdb *.obj *.res *.exe *.dll
+	if exist obj16\*.* rm -f obj16\*.*
+!endif
+!endif
+

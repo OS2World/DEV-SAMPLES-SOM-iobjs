@@ -1,0 +1,10 @@
+LIBRARY phonedir INITINSTANCE
+DESCRIPTION 'PhoneDir Class Library'
+PROTMODE
+DATA MULTIPLE NONSHARED LOADONCALL
+EXPORTS
+SOMInitModule
+PhoneDirCClassData
+PhoneDirClassData
+PhoneDirNewClass
+

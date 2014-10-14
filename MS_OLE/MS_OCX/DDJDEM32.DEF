@@ -1,0 +1,15 @@
+; ddjdem32.def : Declares the module parameters.
+
+LIBRARY      DDJDEMO
+DESCRIPTION  'DDJDEMO OLE Custom Control module (Win32)'
+
+CODE         PRELOAD MOVEABLE DISCARDABLE
+DATA         PRELOAD MOVEABLE SINGLE
+
+HEAPSIZE     1024   ; initial heap size
+
+EXPORTS
+	DllCanUnloadNow     @1 RESIDENTNAME
+	DllGetClassObject   @2 RESIDENTNAME
+	DllRegisterServer   @3 RESIDENTNAME
+	DllUnregisterServer @4 RESIDENTNAME
